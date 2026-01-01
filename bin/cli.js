@@ -77,7 +77,7 @@ export default {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Home | My Website</title>
-  <link rel="stylesheet" href="/assets/styles/main.css">
+  <link rel="stylesheet" href="./assets/styles/main.css">
 </head>
 <body>
   <Component src="Header" title="My Website" />
@@ -116,7 +116,7 @@ export default {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>About | My Website</title>
-  <link rel="stylesheet" href="/assets/styles/main.css">
+  <link rel="stylesheet" href="./assets/styles/main.css">
 </head>
 <body>
   <Component src="Header" title="My Website" />
