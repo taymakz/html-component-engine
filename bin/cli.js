@@ -39,7 +39,7 @@ function question(rl, prompt) {
 const templates = {
   'package.json': (projectName) => `{
   "name": "${projectName}",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -48,7 +48,7 @@ const templates = {
   },
   "devDependencies": {
     "vite": "^7.0.0",
-    "html-component-engine": "^0.1.0"
+    "html-component-engine": "^0.1.1"
   }
 }
 `,
