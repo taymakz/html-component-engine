@@ -8,7 +8,7 @@ export default {
       assetsDir: 'assets',     // src/assets/
     })
   ],
-  publicDir: 'src/assets',     // Serve assets during dev
+  publicDir: 'src',            // Serve src/assets as /assets during dev
   build: {
     outDir: 'dist',
     emptyOutDir: true,

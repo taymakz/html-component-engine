@@ -21,8 +21,8 @@ export default function htmlComponentEngine(options = {}) {
     srcDir = 'src',
     componentsDir = 'components',
     assetsDir = 'assets',
-    inlineStyles = true,
-    inlineScripts = true,
+    inlineStyles = false,
+    inlineScripts = false,
   } = opts;
 
   let projectRoot;
@@ -33,6 +33,41 @@ export default function htmlComponentEngine(options = {}) {
 
   return {
     name: 'html-component-engine',
+
+    async config(config, { command }) {
+      // Calculate paths early for config setup
+      const root = process.cwd();
+      const src = path.resolve(root, srcDir);
+      const components = componentsDir;
+
+      if (command === 'build') {
+        // Disable Vite's default HTML handling - we do it ourselves
+        return {
+          // Disable publicDir - we copy assets ourselves
+          publicDir: false,
+          build: {
+            // Use a virtual entry - we'll handle HTML ourselves in generateBundle
+            rollupOptions: {
+              input: { __virtual_entry__: '\0virtual:html-component-engine-entry' },
+            },
+          },
+        };
+      }
+    },
+
+    // Resolve virtual module
+    resolveId(id) {
+      if (id === '\0virtual:html-component-engine-entry') {
+        return id;
+      }
+    },
+
+    // Provide empty content for virtual module
+    load(id) {
+      if (id === '\0virtual:html-component-engine-entry') {
+        return 'export default {}';
+      }
+    },
 
     configResolved(config) {
       resolvedConfig = config;
@@ -127,12 +162,15 @@ export default function htmlComponentEngine(options = {}) {
     },
 
     /**
-     * Generate bundle - compile HTML and copy assets
+     * Generate bundle - compile HTML files and copy assets
      */
     async generateBundle(outputOptions, bundle) {
-      const outDir = outputOptions.dir || path.resolve(projectRoot, 'dist');
-
-      console.log(`\n📦 Generating output to: ${outDir}`);
+      // Remove virtual entry from bundle
+      for (const fileName in bundle) {
+        if (fileName.includes('__virtual_entry__') || fileName.includes('virtual_html-component-engine')) {
+          delete bundle[fileName];
+        }
+      }
 
       // Get all HTML files from src directory (excluding components)
       const htmlFiles = await getHtmlFiles(srcRoot, '', componentsDir);
@@ -143,37 +181,24 @@ export default function htmlComponentEngine(options = {}) {
         const filePath = path.join(srcRoot, htmlFile);
         let html = await fs.readFile(filePath, 'utf8');
 
-        // Compile components
+        // Only compile components - replace <Component> tags
         html = await compileHtml(html, srcRoot, projectRoot);
-
-        // Inline CSS if enabled
-        if (inlineStyles) {
-          html = await inlineCss(html, srcRoot, projectRoot);
-        }
-
-        // Inline JS if enabled
-        if (inlineScripts) {
-          html = await inlineJs(html, srcRoot, projectRoot);
-        }
 
         // Clean unused placeholders
         html = cleanUnusedPlaceholders(html);
 
-        // Remove Vite-specific scripts
-        html = html.replace(/<script[^>]*@vite[^>]*>[\s\S]*?<\/script>/gi, '');
-
-        // Add to bundle
-        const outputFileName = htmlFile;
+        // Output HTML to dist root with just filename (no subdirectories)
+        const outputFileName = path.basename(htmlFile);
         this.emitFile({
           type: 'asset',
           fileName: outputFileName,
           source: html,
         });
 
-        console.log(`   ✓ Compiled: ${htmlFile}`);
+        console.log(`   ✓ Compiled: ${htmlFile} → ${outputFileName}`);
       }
 
-      // Copy ALL assets to dist/assets (including CSS for reference)
+      // Copy ALL assets to dist/assets
       await copyAllAssets(assetsRoot, this);
     },
 
@@ -222,7 +247,7 @@ async function getHtmlFiles(dir, base = '', componentsDir = 'components') {
 }
 
 /**
- * Copy ALL assets to output directory (including CSS/JS)
+ * Copy ALL assets to dist/assets/ directory
  * @param {string} assetsPath - Assets directory path
  * @param {object} context - Rollup plugin context
  */
@@ -236,15 +261,16 @@ async function copyAllAssets(assetsPath, context) {
 
   const assetFiles = await getAllFiles(assetsPath);
 
-  console.log(`   Copying ${assetFiles.length} asset file(s)`);
+  console.log(`   Copying ${assetFiles.length} asset file(s) to assets/`);
 
   for (const file of assetFiles) {
     const relativePath = path.relative(assetsPath, file);
     const content = await fs.readFile(file);
 
+    // Copy to dist/assets/ subdirectory
     context.emitFile({
       type: 'asset',
-      fileName: path.join('assets', relativePath).replace(/\\/g, '/'),
+      fileName: `assets/${relativePath.replace(/\\/g, '/')}`,
       source: content,
     });
   }

@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/index.js",
   "bin": {
-    "html-component": "./bin/cli.js"
+    "html-component-engine": "./bin/cli.js"
   },
   "files": [
     "src",
