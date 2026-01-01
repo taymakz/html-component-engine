@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About - My Website</title>
+  <link rel="stylesheet" href="/styles/styles.css">
+</head>
+
+<body>
+  <Component src="Header" />
+  <main>
+    <h2>About Usww</h2>
+    <p>This is the about page demonstrating component reuse.</p>
+
+    <Component name="Card" title="Our Mission">
+      <p>We aim to make HTML component development simple and lightweight.</p>
+      <p>No JavaScript frameworks needed - just pure HTML!</p>
+    </Component>
+
+    <Component src="main/Button" text="Go Back" variant="secondary" />
+  </main>
+  <Component src="Footer" />
+</body>
+
+</html>

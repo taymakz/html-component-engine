@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Website</title>
+  <link rel="stylesheet" href="/styles/styles.css">
+</head>
+
+<body>
+  <Component src="Header" />
+  <main>
+    <h2>Welcome to My Websitew</h2>
+    <p>This is an example of using HTML component components.</p>
+
+    <!-- Example of component with children (slot) -->
+    <Component name="Card" title="Featured Content">
+      <h3>Hello World!</h3>
+      <p>This content is passed as children to the Card component.</p>
+      <Component src="main/Button" text="Learn More" variant="primary" />
+    </Component>
+
+    <!-- Another card example -->
+    <Component name="Card" title="Another Card">
+      <p>Cards support any HTML content inside them.</p>
+      <ul>
+        <li>Feature 1</li>
+        <li>Feature 2</li>
+        <li>Feature 3</li>
+      </ul>
+    </Component>
+
+    <!-- Self-closing component -->
+    <Component src="main/Button" text="Click Me" variant="secondary" />
+  </main>
+  <Component src="Footer" />
+</body>
+
+</html>
