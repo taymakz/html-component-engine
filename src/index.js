@@ -198,8 +198,8 @@ export default function htmlComponentEngine(options = {}) {
         console.log(`   ✓ Compiled: ${htmlFile} → ${outputFileName}`);
       }
 
-      // Copy ALL assets to dist/assets
-      await copyAllAssets(assetsRoot, this);
+      // Copy ALL non-HTML files from src/ to dist/ (excluding components/)
+      await copyAllNonComponentFiles(srcRoot, componentsDir, this);
     },
 
     /**
@@ -247,33 +247,62 @@ async function getHtmlFiles(dir, base = '', componentsDir = 'components') {
 }
 
 /**
- * Copy ALL assets to dist/assets/ directory
- * @param {string} assetsPath - Assets directory path
+ * Copy ALL non-HTML files under src/ to dist/ preserving paths
+ * Excludes any directory named componentsDir (defaults to "components").
+ * @param {string} srcPath - src directory path
+ * @param {string} componentsDir - directory name to exclude
  * @param {object} context - Rollup plugin context
  */
-async function copyAllAssets(assetsPath, context) {
-  try {
-    await fs.access(assetsPath);
-  } catch {
-    console.log('   No assets directory found, skipping asset copy');
-    return;
-  }
+async function copyAllNonComponentFiles(srcPath, componentsDir = 'components', context) {
+  const allFiles = await getAllFilesExcludingDir(srcPath, componentsDir);
 
-  const assetFiles = await getAllFiles(assetsPath);
+  let copiedCount = 0;
+  for (const file of allFiles) {
+    const relativePath = path.relative(srcPath, file).replace(/\\/g, '/');
 
-  console.log(`   Copying ${assetFiles.length} asset file(s) to assets/`);
+    // HTML is handled separately (compiled + emitted)
+    if (relativePath.toLowerCase().endsWith('.html')) continue;
 
-  for (const file of assetFiles) {
-    const relativePath = path.relative(assetsPath, file);
     const content = await fs.readFile(file);
-
-    // Copy to dist/assets/ subdirectory
     context.emitFile({
       type: 'asset',
-      fileName: `assets/${relativePath.replace(/\\/g, '/')}`,
+      fileName: relativePath,
       source: content,
     });
+    copiedCount++;
   }
+
+  console.log(`   Copied ${copiedCount} non-HTML file(s)`);
+}
+
+/**
+ * Get all files recursively from a directory, excluding a directory name.
+ * @param {string} dir - Directory to search
+ * @param {string} excludedDirName - Directory name to exclude (e.g., "components")
+ * @returns {Promise<string[]>} - Array of absolute file paths
+ */
+async function getAllFilesExcludingDir(dir, excludedDirName) {
+  const files = [];
+
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        if (entry.name === excludedDirName) continue;
+        const subFiles = await getAllFilesExcludingDir(fullPath, excludedDirName);
+        files.push(...subFiles);
+      } else {
+        files.push(fullPath);
+      }
+    }
+  } catch (error) {
+    console.warn(`Could not read directory ${dir}: ${error.message}`);
+  }
+
+  return files;
 }
 
 /**
